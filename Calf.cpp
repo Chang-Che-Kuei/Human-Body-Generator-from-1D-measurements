@@ -1,6 +1,7 @@
 #include "Calf.h"
 #include <iostream>
 #include <algorithm>
+#include <vector>
 #include <stdio.h>
 #include <math.h>
 using namespace std;
@@ -17,7 +18,7 @@ Calf::Calf(){
 	dis = new double*[GraphSize];
 	for(int i = 0; i < GraphSize; ++i)
     	dis[i] = new double[GraphSize]();
-    if(dis==NULL)cout<<"Hip memory not enough\n";
+    if(dis==NULL)cout<<"Calf memory not enough\n";
 
     length = 0;
 }
@@ -64,7 +65,7 @@ void Calf::SetGraph(int face[][3], Vertex v[]){
 			int v1 = this->Map2Calf[A], v2 = this->Map2Calf[B], v3 = this->Map2Calf[C];
 			this->dis[v1][v2] = this->dis[v2][v1] = d12;
 			this->dis[v1][v3] = this->dis[v3][v1] = d13;
-			this->dis[v2][v3] = this->dis[v2][v3] = d23;
+			this->dis[v2][v3] = this->dis[v3][v2] = d23;
 
 			/*fprintf(check,"v %f %f %f\n",v[A].x, v[A].y, v[A].z);
 			fprintf(check,"v %f %f %f\n",v[B].x, v[B].y, v[B].z);
@@ -116,11 +117,7 @@ void Calf::CalfDijkstra(Vertex v[]){
 			}
 	}
 
-	int last;
-	for(int i=0;i<this->nCalf;++i)
-		if(d[i]!=1e6 && d[i]>this->length)
-			this->length = d[i], last = i;
-
+	int last = FindEndVertex(d,v);
 	//Debug： Output the hip path
 	FILE *CalfPath = fopen("CalfPath.obj", "w");
 	if(CalfPath == NULL){
@@ -141,5 +138,35 @@ void Calf::CalfDijkstra(Vertex v[]){
 	fprintf(CalfPath," 1");//Connect to the last point. Make it a complete circle.
 	fclose(CalfPath);
 
-	cout<<"Calf length:"<<this->length<<endl;
+	//cout<<"Calf length:"<<this->length<<endl;
+}
+
+
+int Calf::FindEndVertex(double d[], Vertex v[]){
+	vector<EndPoint> e;
+	for(int i=0;i<this->nCalf;++i)
+		if(d[i]!=1e6){
+			EndPoint newE = {d[i],i};
+			e.push_back(newE);
+		}
+	sort(e.begin(),e.end());
+
+	int closetId, baseId=CalfBaseID;
+	double closet=99;
+	for(int i=0;i<10;++i){//Pick the vertex nearnest to the basePoint from the farthest 10 vertices
+		int id = this->Map2Ori[e[i].id];
+		double dis = v[id].z-v[baseId].z;
+		if(dis<0)dis=-dis;
+
+		if(dis<closet)closet=dis, closetId=e[i].id;
+	}
+	this->length = d[closetId];
+	return closetId;
+}
+
+Calf::~Calf(){
+	for (int i = 0; i < GraphSize; i++) {
+        delete[] dis[i];
+    }
+    delete[] dis;
 }

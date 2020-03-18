@@ -3,8 +3,9 @@
 #include <algorithm>
 #include <stdio.h>
 #include <math.h>
+#include <vector>
 using namespace std;
-#define HipArea 0.03//0.02~0.03
+#define HipArea 0.04//0.02~0.03
 #define N_FACE 25000
 #define NONE -1
 
@@ -74,7 +75,7 @@ void Hip::SetGraph(int face[][3], Vertex v[]){
 			int v1 = this->Map2Hip[A], v2 = this->Map2Hip[B], v3 = this->Map2Hip[C];
 			this->dis[v1][v2] = this->dis[v2][v1] = d12;
 			this->dis[v1][v3] = this->dis[v3][v1] = d13;
-			this->dis[v2][v3] = this->dis[v2][v3] = d23;
+			this->dis[v2][v3] = this->dis[v3][v2] = d23;
 		}
 	}
 	//cout<<"set graph finished\n";
@@ -122,11 +123,7 @@ void Hip::HipDijkstra(Vertex v[]){
 			}
 	}
 
-	int last;
-	for(int i=0;i<this->nHip;++i)
-		if(d[i]!=1e6 && d[i]>this->length)
-			this->length = d[i], last = i;
-
+	int last = FindEndVertex(d,v);
 	//Debug： Output the hip path
 	FILE *hipPath = fopen("HipPath.obj", "w");
 	if(hipPath == NULL){
@@ -147,6 +144,34 @@ void Hip::HipDijkstra(Vertex v[]){
 	fprintf(hipPath," 1");//Connect to the last point. Make it a complete circle.
 	fclose(hipPath);
 
-	cout<<"Hip length:"<<this->length<<endl;
+	//cout<<"Hip length:"<<this->length<<endl;
 }
 
+int Hip::FindEndVertex(double d[], Vertex v[]){
+	vector<EndPoint> e;
+	for(int i=0;i<this->nHip;++i)
+		if(d[i]!=1e6){
+			EndPoint newE = {d[i],i};
+			e.push_back(newE);
+		}
+	sort(e.begin(),e.end());
+
+	int closetId, baseId=this->baseID;
+	double closet=99;
+	for(int i=0;i<10;++i){//Pick the vertex nearnest to the basePoint from the farthest 10 vertices
+		int id = this->Map2Ori[e[i].id];
+		double dis = v[id].z-v[baseId].z;
+		if(dis<0)dis=-dis;
+
+		if(dis<closet)closet=dis, closetId=e[i].id;
+	}
+	this->length = d[closetId];
+	return closetId;
+}
+
+Hip::~Hip(){
+	for (int i = 0; i < GraphSize; i++) {
+        delete[] dis[i];
+    }
+    delete[] dis;
+}

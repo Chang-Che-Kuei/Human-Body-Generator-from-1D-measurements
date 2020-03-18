@@ -4,7 +4,7 @@
 #include "Vertex.h"
 #define N_Vertex 12500
 #define GraphSize 1500
-#define ThighBaseID 3930
+#define ThighBaseID 3396
 
 class Thigh{
 	public:
@@ -13,6 +13,9 @@ class Thigh{
 		void SetGraph(int face[][3], Vertex v[]);
 		void DisConnectLeft(Vertex v[]);
 		void ThighDijkstra(Vertex v[]);
+		~Thigh();
+
+		double length;
 
 	private:
 		bool crotch[N_Vertex];
@@ -22,7 +25,8 @@ class Thigh{
 		int nThigh;
 
 		double** dis; // 2D array
-		double length;
+
+		int FindEndVertex(double d[], Vertex v[]);
 };
 
 #endif

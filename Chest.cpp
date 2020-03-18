@@ -2,9 +2,10 @@
 #include <iostream>
 #include <algorithm>
 #include <stdio.h>
+#include <vector>
 #include <math.h>
 using namespace std;
-#define ChestArea 0.05
+#define ChestArea 0.06
 #define N_FACE 25000
 #define NONE -1
 
@@ -35,10 +36,10 @@ Chest::Chest(){
 	nChest=0;
 
 	// Init 2D array
-	dis = new double*[GraphSize];
-	for(int i = 0; i < GraphSize; ++i)
-    	dis[i] = new double[GraphSize]();
-    if(dis==NULL)cout<<"Hip memory not enough\n";
+	dis = new double*[GraphSizeChest];
+	for(int i = 0; i < GraphSizeChest; ++i)
+    	dis[i] = new double[GraphSizeChest]();
+    if(dis==NULL)cout<<"Chest memory not enough\n";
 
     length = 0;
 }
@@ -68,7 +69,7 @@ void Chest::SetChestVertexMapping(Vertex v[]){
 }
 
 void Chest::SetGraph(int face[][3], Vertex v[]){
-	FILE* check = fopen("Check.obj","w");
+	FILE* check = fopen("CheckChest.obj","w");
 	if(check==NULL){
 		cout<<"Cannot open Check.obj\n";
 		return;
@@ -83,7 +84,7 @@ void Chest::SetGraph(int face[][3], Vertex v[]){
 			sort(vX,vX+3);
 			double pivot = this->ChestBaseV.x;
 			if( (vX[0]<pivot && vX[1]>pivot) || (vX[1]<pivot && vX[2]>pivot) ||
-				(vX[0]<pivot && vX[2]>pivot)  )
+				(vX[0]<pivot && vX[2]>pivot) )
 				//Don't cut triangles in the back of Chest.
 				//Suppose the thickness of front and back Chest exceeds 0.05m.
 				if( this->ChestBaseV.y-0.05< v[A].y && v[A].y < this->ChestBaseV.y+0.05 )
@@ -95,7 +96,7 @@ void Chest::SetGraph(int face[][3], Vertex v[]){
 			int v1 = this->Map2Chest[A], v2 = this->Map2Chest[B], v3 = this->Map2Chest[C];
 			this->dis[v1][v2] = this->dis[v2][v1] = d12;
 			this->dis[v1][v3] = this->dis[v3][v1] = d13;
-			this->dis[v2][v3] = this->dis[v2][v3] = d23;
+			this->dis[v2][v3] = this->dis[v3][v2] = d23;
 
 			fprintf(check,"v %f %f %f\n",v[A].x, v[A].y, v[A].z);
 			fprintf(check,"v %f %f %f\n",v[B].x, v[B].y, v[B].z);
@@ -104,10 +105,11 @@ void Chest::SetGraph(int face[][3], Vertex v[]){
 			nowV+=3;
 		}
 	}
+	fclose(check);
 }
 
 void Chest::DisConnectLeft(Vertex v[]){
-	FILE* fp =fopen("Disconnect.obj","w");
+	FILE* fp =fopen("DisconnectChest.obj","w");
 	int now = 1;
 
 	int id = this->Map2Chest[ChestBaseID];
@@ -123,6 +125,7 @@ void Chest::DisConnectLeft(Vertex v[]){
 				now+=2;
 			}
 	}
+	fclose(fp);
 }
 
 
@@ -144,7 +147,7 @@ void Chest::ChestDijkstra(Vertex v[]){
 				if(diff<nearBaseZ)
 					min = d[j], id = j, nearBaseZ = diff;
 			}
-
+		//cout<<"id="<<id<<endl;
 		if(min==1e6)break;//all the vertices connected to start point have been used
 
 		visit[id] = true;
@@ -155,10 +158,8 @@ void Chest::ChestDijkstra(Vertex v[]){
 			}
 	}
 
-	int last;
-	for(int i=0;i<this->nChest;++i)
-		if(d[i]!=1e6 && d[i]>this->length)
-			this->length = d[i], last = i;
+	int last = FindEndVertex(d,v);
+
 
 	//Debug： Output the hip path
 	FILE *ChestPath = fopen("ChestPath.obj", "w");
@@ -180,5 +181,34 @@ void Chest::ChestDijkstra(Vertex v[]){
 	fprintf(ChestPath," 1");//Connect to the last point. Make it a complete circle.
 	fclose(ChestPath);
 
-	cout<<"Chest length:"<<this->length<<endl;
+	//cout<<"Chest length:"<<this->length<<endl;
+}
+
+int Chest::FindEndVertex(double d[], Vertex v[]){
+	vector<EndPoint> e;
+	for(int i=0;i<this->nChest;++i)
+		if(d[i]!=1e6){
+			EndPoint newE = {d[i],i};
+			e.push_back(newE);
+		}
+	sort(e.begin(),e.end());
+
+	int closetId, baseId=ChestBaseID;
+	double closet=99;
+	for(int i=0;i<10;++i){//Pick the vertex nearnest to the basePoint from the farthest 10 vertices
+		int id = this->Map2Ori[e[i].id];
+		double dis = v[id].z-v[baseId].z;
+		if(dis<0)dis=-dis;
+
+		if(dis<closet)closet=dis, closetId=e[i].id;
+	}
+	this->length = d[closetId];
+	return closetId;
+}
+
+Chest::~Chest(){
+	for (int i = 0; i < GraphSizeChest; i++) {
+        delete[] dis[i];
+    }
+    delete[] dis;
 }

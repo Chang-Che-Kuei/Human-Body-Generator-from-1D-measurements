@@ -15,6 +15,8 @@ class Hip{
 		void SetGraph(int face[][3], Vertex v[]);
 		void DisConnectLeft(Vertex v[]);
 		void HipDijkstra(Vertex v[]);
+		~Hip();
+		double length;
 
 	private:
 		Vertex HipBaseV;
@@ -25,7 +27,9 @@ class Hip{
 		int nHip;
 
 		double** dis; // 2D array
-		double length;
+		
+
+		int FindEndVertex(double d[], Vertex v[]);
 };
 
 

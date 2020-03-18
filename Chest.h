@@ -3,7 +3,7 @@
 
 #include "Vertex.h"
 #define N_Vertex 12500
-#define GraphSize 1500
+#define GraphSizeChest 2000
 #define N_BaseChest 24
 
 class Chest{
@@ -14,6 +14,8 @@ class Chest{
 		void SetGraph(int face[][3], Vertex v[]);
 		void DisConnectLeft(Vertex v[]);
 		void ChestDijkstra(Vertex v[]);
+		~Chest();
+		double length;
 
 	private:
 		int ChestBaseID,baseChest[N_BaseChest];
@@ -24,7 +26,9 @@ class Chest{
 		int nChest;
 
 		double** dis; // 2D array
-		double length;
+		
+
+		int FindEndVertex(double d[], Vertex v[]);
 };
 
 #endif
