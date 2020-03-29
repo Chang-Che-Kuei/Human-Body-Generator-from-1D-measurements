@@ -10,6 +10,7 @@
 #include "Thigh.h"
 #include "Calf.h"
 #include "Chest.h"
+#include "LowerChest.h"
 #include "Vertex.h"
 #include "UpperArm.h"
 #include "otherMeasure.h"
@@ -157,6 +158,9 @@ double WaistDijkstra(double waistDis[][DisSize], int startId, int size,Vertex v[
 	fclose(waistPath);
 	////////////////////////////
 
+	Vertex startP = v[WaistBasePoint]; //Don't forget to add the length from the last point to start point
+	Vertex endP = v[waistMap2_Ori[last]];
+	longest += sqrt( pow(startP.x-endP.x,2) + pow(startP.y-endP.y,2) );
 	return longest;
 }
 
@@ -185,18 +189,18 @@ void WriteNewObj(Vertex v[],int face[][3]){
 double waistDis[DisSize][DisSize]={};
 int main(){
 	string gender[N_Gender]={"male","female"};
-	for(int s=0;s<=0;++s){
+	for(int s=0;s<=1;++s){
 
 		string outputF = gender[s] + ".txt";     
-		//outputF = "test.txt";
-		FILE *output = fopen(outputF.c_str(), "a");         
+		outputF = "test.txt";
+		FILE *output = fopen(outputF.c_str(), "w");         
 		//FILE *output = fopen( "test.txt", "w");     
 		if(output==NULL){
 			cout<<"Cannot open outputF.";
 			return 0;
 		}
-
-		for(int obj=4731;obj<=N_File;++obj){
+		int Target = 1125;
+		for(int obj=Target;obj<=Target;++obj){
 			string prefix = gender[s] + "/SPRING";
 			stringstream ss;
 			ss << obj;
@@ -266,7 +270,7 @@ int main(){
 
 			int startId = waistMap2Vec[WaistBasePoint];
 			double waistLen = WaistDijkstra(waistDis,startId,waistIndex.size(),v,waistMap2_Ori);
-//cout<<"1\n";
+
 			Hip hip;
 			hip.SetHipBaseV(v);
 			hip.SetHipVertexMapping(v);
@@ -274,21 +278,21 @@ int main(){
 			hip.DisConnectLeft(v);
 			hip.HipDijkstra(v);
 			double hipL =  hip.length;
-//cout<<"2\n";
+
 			Thigh thigh;
 			thigh.SetThighVertexMapping(v);
 			thigh.SetGraph(face, v);
 			thigh.DisConnectLeft(v);
 			thigh.ThighDijkstra(v);
 			double thighL = thigh.length;
-//cout<<"3\n";
+
 			Calf calf;
 			calf.SetCalfVertexMapping(v);
 			calf.SetGraph(face, v);
 			calf.DisConnectLeft(v);
 			calf.CalfDijkstra(v);
 			double calfL = calf.length;
-//cout<<"xc3\n";
+
 			Chest chest;
 			chest.SetChestBaseV(v);
 			chest.SetChestVertexMapping(v);
@@ -296,27 +300,60 @@ int main(){
 			chest.DisConnectLeft(v);
 			chest.ChestDijkstra(v);
 			double chestL = chest.length;
-//cout<<"aaaa3\n";
-			Arm arm;
+
+			LowerChest lowerChest;
+			lowerChest.SetLowerChestBaseV(v);
+			lowerChest.SetLowerChestVertexMapping(v);
+			lowerChest.SetGraph(face, v);
+			lowerChest.DisConnectLeft(v);
+			lowerChest.LowerChestDijkstra(v);
+			double lowerChestL = lowerChest.length;
+
+			/*Arm arm;
 			arm.SetArmVertexMapping(v);
 			arm.SetGraph(face, v);
 			arm.DisConnectLeft(v);
 			arm.ArmDijkstra(v);
-			double armL = arm.length;
+			double armL = arm.length;*/
 //cout<<"q\n";
-			double height = GetHight(Max,Min)*100;
+			double height = GetHight(Max,Min);
 			//printf("The waist girth is %f\n",waistLen);
 //cout<<"w\n";
-			double otherM[4];
+			double otherM[8];
 			OtherMeasure(v,otherM);
 //cout<<"e\n";
-			fprintf(output,"%f %f %f %f %f %f %f %f %f %f %f\n",            
-				height, chestL, waistLen, hipL, thighL, calfL, armL,
-				otherM[0], otherM[1], otherM[2], otherM[3]);
+			fprintf(output,"%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",            
+				height, chestL, lowerChestL, waistLen, hipL, thighL, calfL ,
+				otherM[0], otherM[1], otherM[2], otherM[3],
+				otherM[4], otherM[5], otherM[6], otherM[7]);
 
 			
 			fclose(fp);
+/*
+			int arr[] = {4337,4289,12486,12487,12491,12493,12498,4122,12499,12489,4206,4320,4486,4553,4620,4354,4394,
+				4490,4564,4642,4732,4933,4975,5158,5281,12489,4206,4320,4486,4553,4620,4669,4728,
+				4760,4837,5012,5166,5343};
+			vector<int> crotch (arr, arr + sizeof(arr) / sizeof(arr[0]) );
+			int arr2[] = {10314,10200,10131,10059,10032,
+				9989,9935,9833,9770,9712,9715,9702,9756,9849,9881,10217,10280,10291,10299,10445,10427,9932,9956,10034,10128,
+				9890,9824,9804,9784,9650,9572,9550,9574,9594,9708,9743,9807,9852,9974,10099,10108,10194,
+				10262,10300,10361,10409,10172,10287,10341,10432};
+			vector<int> underArm(arr2, arr2 + sizeof(arr2) / sizeof(arr2[0]) );
+			FILE *fpp = fopen("Forbidden.obj","w");
+			int lineB = 1;
+			for(int i=0;i<crotch.size();++i)
+				fprintf(fpp, "v %f %f %f\n",v[crotch[i]].x, v[crotch[i]].y, v[crotch[i]].z);
+			for(int i=0;i<crotch.size()-1;++i)
+				fprintf(fpp, "l %d %d\n",lineB, lineB+1), lineB+=1;
+			lineB+=1;
+
+			for(int i=0;i<underArm.size();++i)
+				fprintf(fpp, "v %f %f %f\n",v[underArm[i]].x, v[underArm[i]].y, v[underArm[i]].z);
+			for(int i=0;i<underArm.size()-1;++i)
+				fprintf(fpp, "l %d %d\n",lineB, lineB+1), lineB+=1;
+			fclose(fpp);*/
 		}
 		//fclose(output);
 	}
 }
+

@@ -16,12 +16,16 @@ Chest::Chest(){
 	underArm[10314] = underArm[10200] = underArm[10131] = underArm[10059] = underArm[10032] = 
 	underArm[9989] = underArm[9935] = underArm[9833] = underArm[9770] = underArm[9712] = 
 	underArm[9715] = underArm[9702] = underArm[9756] = underArm[9849] = underArm[9881] = 
-	underArm[9962] = underArm[10056] = underArm[10150] = true;
+	underArm[9962] = underArm[10056] = underArm[10150] = 
+	underArm[10217] = underArm[10280] = underArm[10291] = underArm[10299] = underArm[10445] = 
+	underArm[10427] = true;
 	//rigth undrearm
 	underArm[9932] = underArm[9956] = underArm[10034] = underArm[10128] = underArm[9890] = 
 	underArm[9824] = underArm[9804] = underArm[9784] = underArm[9650] = underArm[9572] = 
 	underArm[9550] = underArm[9574] = underArm[9594] = underArm[9708] = underArm[9743] = 
-	underArm[9807] = underArm[9852] = underArm[9974] = underArm[10099] = underArm[10108] = true;
+	underArm[9807] = underArm[9852] = underArm[9974] = underArm[10099] = underArm[10108] = 
+	underArm[10194] = underArm[10262] = underArm[10300] = underArm[10361] = underArm[10409] = 
+	underArm[10172] = underArm[10287] = underArm[10341] = underArm[10432] = true;
 
 	//BasePoint
 	int id[N_BaseChest] = {
@@ -203,6 +207,10 @@ int Chest::FindEndVertex(double d[], Vertex v[]){
 		if(dis<closet)closet=dis, closetId=e[i].id;
 	}
 	this->length = d[closetId];
+
+	Vertex startP = v[baseId]; //Don't forget to add the length from the last point to start point
+	Vertex endP = v[Map2Ori[closetId]];
+	this->length += sqrt( pow(startP.x-endP.x,2) + pow(startP.y-endP.y,2) );
 	return closetId;
 }
 

@@ -4,7 +4,7 @@
 #include "Vertex.h"
 #define N_Vertex 12500
 #define GraphSize 1500
-#define ThighBaseID 3396
+#define ThighBaseID 3669
 
 class Thigh{
 	public:

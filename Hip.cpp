@@ -166,6 +166,10 @@ int Hip::FindEndVertex(double d[], Vertex v[]){
 		if(dis<closet)closet=dis, closetId=e[i].id;
 	}
 	this->length = d[closetId];
+
+	Vertex startP = v[baseId]; //Don't forget to add the length from the last point to start point
+	Vertex endP = v[Map2Ori[closetId]];
+	this->length += sqrt( pow(startP.x-endP.x,2) + pow(startP.y-endP.y,2) );
 	return closetId;
 }
 

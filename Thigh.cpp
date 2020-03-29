@@ -16,7 +16,11 @@ Thigh::Thigh(){
 	crotch[4337] = crotch[4289] = crotch[12486] = crotch[12487] = crotch[12491] =
 	crotch[12493] = crotch[12498] = crotch[4122] = crotch[12499] = crotch[12489] =
 	crotch[4206] = crotch[4320] = crotch[4486] = crotch[4553] = crotch[4620] = 
-	crotch[4354] = crotch[4394] = crotch[4490] = crotch[4564] = crotch[4642] = true;
+	crotch[4354] = crotch[4394] = crotch[4490] = crotch[4564] = crotch[4642] =
+	crotch[4732] = crotch[4933] = crotch[4975] = crotch[5158] = crotch[5281] =
+	crotch[12489] = crotch[4206] = crotch[4320] = crotch[4486] = crotch[4553] =
+	crotch[4620] = crotch[4669] = crotch[4728] = 
+	crotch[4760] = crotch[4837] = crotch[5012] = crotch[5166] = crotch[5343] =true;
 
 	for(int i=0;i<N_Vertex;++i)
 		Map2Thigh[i] = Map2Ori[i] = NONE;
@@ -189,6 +193,10 @@ int Thigh::FindEndVertex(double d[], Vertex v[]){
 		if(dis<closet)closet=dis, closetId=e[i].id;
 	}
 	this->length = d[closetId];
+
+	Vertex startP = v[baseId]; //Don't forget to add the length from the last point to start point
+	Vertex endP = v[Map2Ori[closetId]];
+	this->length += sqrt( pow(startP.x-endP.x,2) + pow(startP.y-endP.y,2) );
 	return closetId;
 }
 
