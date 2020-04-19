@@ -22,16 +22,19 @@ if __name__ == '__main__':
     thetas = np.random.randn(1, 72).astype(np.float32) * 0
     #a = tf.compat.v1.placeholder(tf.float32, shape=betas.shape)
     #b = tf.compat.v1.placeholder(tf.float32, shape=thetas.shape)
-    betas[0] = [0.914113, 0.434724689 ,-2.05692434 ,-0.237035453 ,2.7901566, -1.01165068, -0.883344352 ,1.16140234, -3.29744959, 2.77287912]
+    
+    betas[0] = [ 0.512395859 , -0.547654688 , -0.418111682 , 3.35437632 , 3.27270198 , -3.25339627 , 2.39611864 , 1.31069338 , -0.190984294 , 1.39778149 ]
 
-
-
-    #thetas[0][38]  = 0.2 # Left shoulder 39
     thetas[0][41]  = -0.2 # Left shoulder 39
     thetas[0][44]  = 0.2 # Left shoulder 39
     thetas[0][50]  = -0.8 # Left shoulder 39
     thetas[0][53]  = 0.8 # right shoulder 42
 
+    thetas[0][5] = 0.1 # Left leg
+    thetas[0][8] = -0.1# Right leg
+
+    thetas[0][55] = -0.1 # left elbow
+    thetas[0][58] = 0.1# right elbow
 
     # import scipy.io
     # info_dict = scipy.io.loadmat(os.path.join(dirpath, '32_07_c0001_info.mat'))
@@ -39,7 +42,7 @@ if __name__ == '__main__':
     # betas = np.transpose(info_dict['shape'], (1, 0))[0, np.newaxis]
 
     verts, _, _ = smpl_model(betas, thetas, get_skin=True)
-    print(type(verts),verts.shape,'\n\n\n')
+    #print(type(verts),verts.shape,'\n\n\n')
     verts = verts[0]
 
     #config = tf.compat.v1.ConfigProto()
@@ -49,7 +52,7 @@ if __name__ == '__main__':
 
 
     faces = np.load(os.path.join(dirpath, 'smpl_faces.npy'))
-    print(dirpath)
+    #print(dirpath)
     
     outmesh_path = os.path.join(dirpath, '2.obj')
     with open(outmesh_path, 'w') as fp:

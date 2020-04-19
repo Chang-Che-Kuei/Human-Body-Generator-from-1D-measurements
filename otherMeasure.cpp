@@ -11,9 +11,10 @@ void OtherMeasure(Vertex v[], double otherM[]){
 	otherM[2] = BackLength(v);
 	otherM[3] = ShoulderHeight(v);
 	otherM[4] = ChestHeight(v);
-	otherM[5] = HipHeight(v);
-	otherM[6] = KneeHeight(v);
-	otherM[7] = HipDepth(v);
+	otherM[5] = ChestDepth(v); // BP --> shoulder
+	otherM[6] = HipHeight(v);
+	otherM[7] = KneeHeight(v);
+	otherM[8] = HipDepth(v);
 	//cout<<"/////////////////////////\n";
 
 	//Debug
@@ -38,6 +39,9 @@ void OtherMeasure(Vertex v[], double otherM[]){
 	fprintf(other,"l %d %d\n",n,n+1);  n+=2;
 	fprintf(other,"v %f %f %f\n",v[9261].x,v[9261].y,v[9261].z); //ChestHeight
 	fprintf(other,"v %f %f %f\n",v[9261].x,v[9261].y,v[21].z);
+	fprintf(other,"l %d %d\n",n,n+1);  n+=2;
+	fprintf(other,"v %f %f %f\n",v[9261].x,v[9261].y,v[9261].z); //ChestDepth
+	fprintf(other,"v %f %f %f\n",v[9261].x,v[8986].y,v[9261].z);
 	fprintf(other,"l %d %d\n",n,n+1);  n+=2;
 	fprintf(other,"v %f %f %f\n",v[5038].x,v[5038].y,v[5038].z); //HipHeight
 	fprintf(other,"v %f %f %f\n",v[5038].x,v[5038].y,v[21].z);
@@ -81,15 +85,21 @@ double BackLength(Vertex v[]){
 }
 
 double ShoulderHeight(Vertex v[]){
-	Vertex rightShoulder = v[10751];
+	Vertex leftShoulder = v[10751];
 	Vertex soleplate = v[21];
-	return rightShoulder.z - soleplate.z;
+	return leftShoulder.z - soleplate.z;
 }
 
 double ChestHeight(Vertex v[]){//nipple height
 	Vertex chest = v[9261];
 	Vertex soleplate = v[21];
 	return chest.z - soleplate.z;
+}
+
+double ChestDepth(Vertex v[]){
+	Vertex chest = v[9261];
+	Vertex back = v[8986];
+	return back.y - chest.y;
 }
 
 double HipHeight(Vertex v[]){//most perky point

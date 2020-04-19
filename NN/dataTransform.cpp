@@ -4,7 +4,7 @@
 using namespace std;
 
 int main(){
-	int dimension = 15;
+	int dimension = 16;
 	char fileName[2][100] = {"male.txt","female.txt"};
 	char nfileName[2][100] = {"Male.txt","Female.txt"};
 	for(int i=0;i<2;++i){

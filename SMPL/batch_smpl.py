@@ -11,7 +11,8 @@ import pickle
 import os
 import tensorflow as tf
 from batch_lbs import batch_rodrigues, batch_global_rigid_transformation
-
+import sys
+#np.set_printoptions(threshold=sys.maxsize)
 
 class SMPL(object):
     def __init__(self, pkl_path, joint_type='cocoplus', dtype=tf.float32):
@@ -120,9 +121,10 @@ class SMPL(object):
             self.J_transformed, A = batch_global_rigid_transformation(Rs, J, self.parents)
 
             # 5. Do skinning:
-            # W is N x 6890 x 24
+            # W is N x 6890 x 24, the weight of 24 joints inference every vertex
             W = tf.reshape(
                 tf.tile(self.weights1, [num_batch, 1]), [num_batch, -1, 24])
+            #print(W[0,0:2])
             # (N x 6890 x 24) x (N x 24 x 16)
             T = tf.reshape(
                 tf.matmul(W, tf.reshape(A, [num_batch, 24, 16])),
@@ -130,7 +132,7 @@ class SMPL(object):
             v_posed_homo = tf.concat(
                 [v_posed, tf.ones([num_batch, v_posed.shape[1], 1])], 2)
             v_homo = tf.matmul(T, tf.expand_dims(v_posed_homo, -1))
-
+            #print(v_homo)
             verts = v_homo[:, :, :3, 0]
 
             # Get cocoplus or lsp joints:

@@ -3,6 +3,7 @@ import tensorflow as tf
 import pickle
 import sys
 import time
+import datetime
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL']='3'
 import numpy as np
@@ -17,10 +18,10 @@ print("Num GPUs:", len(physical_devices),'\n',physical_devices,'\n\n')
 class MyModel(tf.keras.Model):
   def __init__(self, batchSize = 32):
     super(MyModel, self).__init__()
-    self.d0 = tf.keras.layers.Dense(100,input_shape=(14,), name="Den0") #, activation = 'relu')
-    self.d1 = tf.keras.layers.Dense(100, name="Den1")
-    self.d2 = tf.keras.layers.Dense(100, name="Den2")
-    self.d3 = tf.keras.layers.Dense(100, name="Den3")
+    self.d0 = tf.keras.layers.Dense(100,input_shape=(15,), name="Den0") #, activation = 'relu')
+    #self.d1 = tf.keras.layers.Dense(100, name="Den1")
+    #self.d2 = tf.keras.layers.Dense(100, name="Den2")
+    #self.d3 = tf.keras.layers.Dense(100, name="Den3")
     self.d4 = tf.keras.layers.Dense(100, name="Den4")
     self.d5 = tf.keras.layers.Dense(60, name="Den5")
     self.d6 = tf.keras.layers.Dense(20, name="Den6")
@@ -42,11 +43,11 @@ class MyModel(tf.keras.Model):
   def call(self, x):
     x = self.d0(x)
    # x = self.norm1(x)
-    x = self.d1(x)
+   # x = self.d1(x)
    # x = self.norm2(x)
-    x = self.d2(x)
+   # x = self.d2(x)
    # x = self.norm2(x)
-    x = self.d3(x)
+   # x = self.d3(x)
   #  x = self.norm2(x)
     x = self.d4(x)
     x = self.d5(x)
@@ -58,123 +59,91 @@ class MyModel(tf.keras.Model):
     # add betas loss. PCA should not be too big or small
     betaLoss = tf.reduce_mean(tf.math.pow(betas, 2)) * 3e-5
     self.add_loss(betaLoss)
-    tf.print('\n',betas[0],summarize=-1)
-
+    #tf.print('\n',betas[0],summarize=-1)
+    tf.print('\n[',betas[0][0],',',betas[0][1],',',betas[0][2],',',betas[0][3],',',betas[0][4],',',
+              betas[0][5],',',betas[0][6],',',betas[0][7],',',betas[0][8],',',betas[0][9],']')
     #tf.print('\nB  = ',betas[0], summarize=-1)
-    batchSize = tf.shape(input=betas)[0]
+    #batchSize = tf.shape(input=betas)[0]
     #theta = tf.zeros((batchSize,1,72),dtype='float32')
     verts, _, _ = self.SMPL(betas, self.theta, get_skin=True)
-    y_pred = CollectPred(verts,self.index)
-    return y_pred
+    #y_pred = CollectPred(verts,self.index)
+    #return y_pred
+    return verts
 
-def MSE(y_true, y_pred):
+def MSE( y_true, y_pred):
+  y_pred = CollectPred(y_pred)
   #tf.print(y_pred,'\n\n\n\n')
   tf.print('True  = ',y_true[0],summarize=-1)
   tf.print('Pred  = ',y_pred[0],summarize=-1)
-  diff = tf.math.abs( tf.math.subtract(y_true, y_pred) )
-  accuracy = tf.math.divide (diff,y_true)
-  acc = tf.reduce_mean(accuracy,0) * 100
+  diff = tf.math.abs( tf.math.subtract(y_true, y_pred) , name='ABS')
+  accuracy = tf.math.divide (diff,y_true, name='Divide')
+  acc = tf.reduce_mean(accuracy,0, name='Reduce_Mean') * 100
   tf.print("Err   = ",acc,summarize=-1)
   #tf.print("         Height UpChest LowChest Waist Hip Thigh Calf ")
   #return  tf.keras.losses.MSE(y_true,y_pred)
-  loss = tf.math.square( tf.math.subtract(y_pred, y_true) )
+  loss = tf.math.square( tf.math.subtract(y_pred, y_true) , name='Square' )
+  betaWeight = tf.constant([1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1],dtype=np.float32) # chestDepth is 3
+  loss = loss * betaWeight
   #tf.print('Loss = ',loss[0],summarize=-1)
   return loss
 
 
 
 # height, chest, waist, hip, thigh, calf, upperArm, arm, leg, back, upperBody
-data = np.loadtxt("Female.txt").astype(np.float32) 
-data = np.delete(data, 2, 1) # delete lower chest
+data = np.loadtxt("Mix.txt").astype(np.float32) 
+data = np.delete(data, 12, 1) # delete chest depth for the convenience of user testing
+
+np.random.shuffle(data)
+
 
 batchSize = 32# let the size of dataset match the batch size 32
 n = data.shape[0] 
 nBatch = int(n/batchSize) # Step
 data = data[0:batchSize*nBatch]
 
-y_train = data[0:batchSize*(nBatch-3)]
-y_test = data[batchSize*(nBatch-3):batchSize*nBatch]
+y_train = data[0:batchSize*(nBatch-10)]
+y_test = data[batchSize*(nBatch-10):batchSize*nBatch]
 
 mean = np.mean(data, axis = 0)#Standardize data
 std = np.std(data, axis=0)
 data = (data - mean) / std
-x_train = data[0:batchSize*(nBatch-3)]
-x_test = data[batchSize*(nBatch-3):batchSize*nBatch]
 
+x_train = data[0:batchSize*(nBatch-10)]
+x_test = data[batchSize*(nBatch-10):batchSize*nBatch]
 
+print(mean, std)
+print(x_train[0], x_test[0], y_train[0], y_test[0])
+
+'''
 model = MyModel(batchSize=batchSize)
-epoch = 30
-#initial_learning_rate = 0.05
-#lr_schedule = tf.compat.v1.train.exponential_decay(initial_learning_rate,
-#  200, nBatch , 0.96, staircase=True)
+# Include the epoch in the file name (uses `str.format`)
+checkpoint_path = "model/mix/cp.ckpt"
+checkpoint_dir = os.path.dirname(checkpoint_path)
+# Create a callback that saves the model's weights every 5 epochs
+cp_callback = tf.keras.callbacks.ModelCheckpoint(
+    filepath=checkpoint_path, 
+    verbose=1, 
+    save_weights_only=True,
+    save_freq=y_train.shape[0]*10) # save weights every 10 epochs
 
-adam = tf.keras.optimizers.Adam(learning_rate = 0.001)
+epoch = 30
 RMSprop = tf.keras.optimizers.RMSprop(learning_rate=0.0001)
 model.compile(optimizer=RMSprop,
               loss=MSE,#'mean_squared_error',
-              metrics=['mean_squared_error'])
+                           )
+
 
 tf.keras.utils.plot_model(model, 'a.png', show_shapes=True)
 
 #print(result,result.shape,type(result))
 #vert = np.zeros((1472,6890,3),dtype='float32') # It is used to make the model ouput vertex info when use function 'call'
 #y_train = [y_train, vert]
-model.fit(x_train, y_train, epochs=epoch,batch_size=batchSize ,verbose=1)
+log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + "_Mix"
+tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
+model.fit(x_train, y_train, epochs=epoch,batch_size=batchSize ,verbose=1,
+  callbacks=[cp_callback,tensorboard_callback], validation_data=(x_test, y_test) )
 model.summary()
 model.evaluate(x_test, y_test)
-
-
-
-
-
-
+model.save('MixModel') 
 '''
-train_dataset = tf.data.Dataset.from_tensor_slices((x_train,y_train))
-train_dataset = train_dataset.shuffle(buffer_size=2000).batch(batchSize)
-
-epochs = 15
-
-# Iterate over epochs.
-for epoch in range(epochs):
-  verts = None
-  # Iterate over the batches of the dataset.
-  for step, x in enumerate(train_dataset):
-    with tf.GradientTape() as tape:
-      #print(x.shape)
-      pred, verts = model(x[0])
-      # Compute reconstruction loss
-      loss = heightLoss(x[1], pred)
-
-    grads = tape.gradient(loss, model.trainable_weights)
-    RMSprop.apply_gradients(zip(grads, model.trainable_weights))
-
-    print('Epoch = ',epoch,', Step = ',step)
-    print('Loss = ', tf.math.reduce_mean(loss))
-    print('pred = ', pred[0])
-  
-  result = verts[0]
-  if epoch == epochs-1:
-    faces = np.load(os.path.join('SMPL/', 'smpl_faces.npy'))
-    outmesh_path = os.path.join( 'ResultCustomLoop.obj')
-    with open(outmesh_path, 'w') as fp:
-      for v in result:
-        fp.write('v %f %f %f\n' % (v[0], v[1], v[2]))
-
-      for f in faces + 1:
-        fp.write('f %d %d %d\n' % (f[0], f[1], f[2]))
-
-@tf.function
-def train_step(model, data, labels):
-    with tf.GradientTape() as tape:
-      pred, verts = model(data)
-      loss = heightLoss(labels, pred)
-    gradients = tape.gradient(loss, model.trainable_variables)
-    RMSprop.apply_gradients(zip(gradients, model.trainable_variables))
-
-for epoch in range(epochs):
-  print('Epoch = ',epoch)
-  n = 0
-  for data, labels in train_dataset:
-    print(n)
-    n+=1
-    train_step(model, data, labels)'''

@@ -3,7 +3,7 @@
 
 #include "Vertex.h"
 #define N_Vertex 12500
-#define GraphSizeLowerChest 2000
+#define GraphSizeLowerChest 3000
 
 
 class LowerChest{

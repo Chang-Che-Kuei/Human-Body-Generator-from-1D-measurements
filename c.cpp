@@ -199,7 +199,7 @@ int main(){
 			cout<<"Cannot open outputF.";
 			return 0;
 		}
-		int Target = 1125;
+		int Target = 1785;
 		for(int obj=Target;obj<=Target;++obj){
 			string prefix = gender[s] + "/SPRING";
 			stringstream ss;
@@ -308,7 +308,6 @@ int main(){
 			lowerChest.DisConnectLeft(v);
 			lowerChest.LowerChestDijkstra(v);
 			double lowerChestL = lowerChest.length;
-
 			/*Arm arm;
 			arm.SetArmVertexMapping(v);
 			arm.SetGraph(face, v);
@@ -319,13 +318,13 @@ int main(){
 			double height = GetHight(Max,Min);
 			//printf("The waist girth is %f\n",waistLen);
 //cout<<"w\n";
-			double otherM[8];
+			double otherM[9];
 			OtherMeasure(v,otherM);
 //cout<<"e\n";
-			fprintf(output,"%f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",            
+			fprintf(output,"%f %f %f %f %f   %f %f %f %f %f   %f %f %f %f %f %f\n",            
 				height, chestL, lowerChestL, waistLen, hipL, thighL, calfL ,
 				otherM[0], otherM[1], otherM[2], otherM[3],
-				otherM[4], otherM[5], otherM[6], otherM[7]);
+				otherM[4], otherM[5], otherM[6], otherM[7], otherM[8]);
 
 			
 			fclose(fp);

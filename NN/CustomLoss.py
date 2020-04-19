@@ -5,9 +5,11 @@ from tensorflow import math# pow, square
 chestI = np.array([4160,4087,4090,4175,4173,4180,6332,3078,2872,692,685,687,600,599,670,669,1422,1425,
 614,1198,1764,1423,645,644,738,764,2907,1254,1237,751,752,3015,4240,4241,4720,4737,6367,4253,4252,4225,
 4134,4133,4897,5231,4683,4100,4899,4895,4157,4160])
-lowerChestI = np.array([3512,2849,927,926,2846,617,618,3481,2848,2840,2841,2852,1268,2826,
-	1496,2828,2827,2839,3174,6299,6288,6289,4968,6287,4749,6313,6302,6301,6309,6879,4104,
-	4105,6307,4413,4412,6310,3512])
+lowerChestI = np.array([1330,1201,928,929,659,660,1758,1759,942,620,621,1270,795,796,2845,2844,1213,768,
+	767,3018,4257,4256,4696,6306,6305,6304,4284,4753,4109,4110,4428,5226,5225,4150,4147,4416,4414,4689])
+#lowerChestI = np.array([3512,2849,927,926,2846,617,618,3481,2848,2840,2841,2852,1268,2826,
+	#1496,2828,2827,2839,3174,6299,6288,6289,4968,6287,4749,6313,6302,6301,6309,6879,4104,
+	#4105,6307,4413,4412,6310,3512])
 waistI =  np.array([3501,1337,918,917,920,680,679,706,939,847,831,832,845,846,887,2929,2930,1780,
 1783,3022,5246,5245,6389,6390,4374,4331,4332,4317,4318,4333,4194,4167,4168,4407,4406,4404,4403,4813,3501])
 hipI =  np.array([3120,6542,6540,6541,6560,6559,6558,6510,4920,4921,4928,6550,4986,4401,4399,4692,4349,4350,3511,866,
@@ -24,13 +26,13 @@ calfI -= 1
 upperArmI -= 1
 X, Y, Z = 0, 2, 1
 
-def CollectPred(verts, index):
+def CollectPred(verts):
 	batchSize = tf.shape(verts)[0]
 
 	height    = Height(verts, batchSize)
 	# Circumference
 	chest     = XYplane(verts, chestI, batchSize)
-	lowerChest = XYplane(verts, lowerChestI, batchSize)
+	lowerChest= XYplane(verts, lowerChestI, batchSize)
 	waist     = XYplane(verts, waistI, batchSize)
 	hip       = XYplane(verts, hipI, batchSize)
 	thigh     = XYplane(verts, thighI, batchSize)
@@ -42,12 +44,13 @@ def CollectPred(verts, index):
 	back      = Back(verts, batchSize)
 	shouderH  = ShoulderHeight(verts, batchSize);
 	chestH    = ChestHeight(verts, batchSize);
+	chestDepth= ChestDepth(verts, batchSize);
 	hipH      = HipHeight(verts, batchSize);
 	kneeH     = KneeHeight(verts, batchSize);
 	hipDepth  = HipDepth(verts, batchSize);
 	#upperBody = UpperBody(verts, batchSize)
 	
-	result = tf.concat([height, chest, waist, hip, thigh, calf, arm, leg, back,
+	result = tf.concat([height, chest, lowerChest, waist, hip, thigh, calf, arm, leg, back,
 		shouderH, chestH, hipH, kneeH, hipDepth], -1, name="IsThis") 
 	#tf.print('shape = ',tf.shape(result))
 	#tf.print('height = ',tf.shape(height))
@@ -82,7 +85,7 @@ def YZplane(verts, index, batchSize):
 
 
 def Arm(verts, batchSize):
-	shoulder = verts[:,1821] #leftShoulder
+	shoulder = verts[:,1881] #leftShoulder
 	elbow = verts[:,1642]
 	wrist = verts[:,2208] # shoulder.x - wrist.x
 	s2e = tf.math.sqrt( tf.math.pow(shoulder[:,X]-elbow[:,X],2) + tf.math.pow(shoulder[:,Y]-elbow[:,Y],2) +
@@ -97,15 +100,19 @@ def Leg(verts, batchSize):
 	return tf.reshape(result, (batchSize,-1))
 
 def Back(verts, batchSize):
-	result = verts[:,1821,0] - verts[:,5325,0] # leftShoulder.x - rightShoulder.x
+	result = verts[:,1881,0] - verts[:,6469,0] # leftShoulder.x - rightShoulder.x
 	return tf.reshape(result, (batchSize,-1))
 
 def ShoulderHeight(verts, batchSize):
-	result = verts[:,1821,1] - verts[:,3438,1] # shoulder.y - Soleplate.y
+	result = verts[:,1881,1] - verts[:,3438,1] # shoulder.y - Soleplate.y
 	return tf.reshape(result, (batchSize,-1))
 
 def ChestHeight(verts, batchSize):
 	result = verts[:,4429,1] - verts[:,3438,1] # nipple.y - Soleplate.y
+	return tf.reshape(result, (batchSize,-1))
+
+def ChestDepth(verts, batchSize):
+	result = verts[:,4429,2] - verts[:,4735,2] # nipple.y - back.y
 	return tf.reshape(result, (batchSize,-1))
 
 def HipHeight(verts, batchSize):

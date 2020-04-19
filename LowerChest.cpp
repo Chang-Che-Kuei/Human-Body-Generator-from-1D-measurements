@@ -5,7 +5,7 @@
 #include <vector>
 #include <math.h>
 using namespace std;
-#define LowerChestArea 0.06
+#define LowerChestArea 0.04
 #define N_FACE 25000
 #define NONE -1
 
@@ -42,8 +42,25 @@ LowerChest::LowerChest(){
 }
 
 void LowerChest::SetLowerChestBaseV(Vertex v[]){
-	this->LowerChestBaseID = 8372;
-	this->LowerChestBaseV = v[8372];
+	/*int candidate[9]={9158,9079,8973,8926,8792, 8722,8631,8552,8588};
+	FILE *lowerBase = fopen("LowerBase.obj","w");
+	if(lowerBase==NULL)printf("???\n");
+
+	for(int i=0;i<9;++i)candidate[i]-=1;
+	for(int i=0;i<9;++i)fprintf(lowerBase, "v %f %f %f\n",v[candidate[i]].x, v[candidate[i]].y, v[candidate[i]].z );
+	fprintf(lowerBase,"l ");
+	for(int i=1;i<=9;++i)fprintf(lowerBase,"%d ",i);
+	fclose(lowerBase);
+	double MaxY = -10; 
+	//Find the most sunken vertex on chest
+	for(int i=0;i<9;++i)
+		if(v[candidate[i]].y > MaxY){
+			MaxY = v[candidate[i]].y;
+			this->LowerChestBaseID = candidate[i];
+			this->LowerChestBaseV = v[candidate[i]];
+		}	*/
+	this->LowerChestBaseID = 8792-1;
+	this->LowerChestBaseV = v[8792-1];
 }
 
 void LowerChest::SetLowerChestVertexMapping(Vertex v[]){
@@ -71,8 +88,33 @@ void LowerChest::SetGraph(int face[][3], Vertex v[]){
 		int A = face[i][0], B = face[i][1], C = face[i][2];
 		if(this->Map2LowerChest[A]!=NONE && this->Map2LowerChest[B]!=NONE && this->Map2LowerChest[C]!=NONE ){//LowerChest triangle mesh
 			//cut the circle to be a plane
-			double vX[3] = {v[A].x, v[B].x, v[C].x};
-			sort(vX,vX+3);
+			//double vX[3] = {v[A].x, v[B].x, v[C].x};
+			int pair[6] = {A,B, A,C, B,C}; // 3 pairs (A,B), (A,C) and (B,C)
+			for(int p=0;p<6;p+=2){
+				int v1=pair[p], v2=pair[p+1];
+				if(v[v1].x > v[v2].x)swap(v1, v2);
+
+				double baseX = this->LowerChestBaseV.x;
+				if( v2 == LowerChestBaseID && v[v1].x < v[v2].x )//Cut left path from base vertex
+					continue;
+
+				// Don't cut triangles in the back of LowerChest.
+				// Suppose the thickness of front and back LowerChest exceeds 0.05m.
+				double baseY = this->LowerChestBaseV.y;
+				if( (v[v1].x <= baseX && baseX <= v[v2].x && v1 != this->LowerChestBaseID) )
+				 	if( baseY-0.05 < v[v1].y && v[v1].y < baseY+0.05)
+				 		continue;				
+
+				double distance = sqrt( pow(v[v1].x-v[v2].x,2) + pow(v[v1].y-v[v2].y,2) );
+				int id1 = this->Map2LowerChest[v1], id2 = this->Map2LowerChest[v2];
+				this->dis[id1][id2] = this->dis[id2][id1] = distance;
+
+				fprintf(check,"v %f %f %f\n",v[v1].x, v[v1].y, v[v1].z);
+				fprintf(check,"v %f %f %f\n",v[v2].x, v[v2].y, v[v2].z);
+				fprintf(check,"l %d %d \n",nowV,nowV+1);
+				nowV+=2;
+			}
+			/*sort(vX,vX+3);
 			double pivot = this->LowerChestBaseV.x;
 			if( (vX[0]<pivot && vX[1]>pivot) || (vX[1]<pivot && vX[2]>pivot) ||
 				(vX[0]<pivot && vX[2]>pivot) )
@@ -93,7 +135,7 @@ void LowerChest::SetGraph(int face[][3], Vertex v[]){
 			fprintf(check,"v %f %f %f\n",v[B].x, v[B].y, v[B].z);
 			fprintf(check,"v %f %f %f\n",v[C].x, v[C].y, v[C].z);
 			fprintf(check,"l %d %d %d %d\n",nowV,nowV+1,nowV+2,nowV);
-			nowV+=3;
+			nowV+=3;*/
 		}
 	}
 	fclose(check);
@@ -124,21 +166,34 @@ void LowerChest::LowerChestDijkstra(Vertex v[]){
 	double d[this->nLowerChest]; fill_n(d,this->nLowerChest,1e6);
 	bool visit[this->nLowerChest]={};
 
+	//FILE *Core = fopen("Dump.obj","w");
+	//int nCore = 0;
+
 	int startId = this->Map2LowerChest[LowerChestBaseID];
 	int parent[this->nLowerChest]; fill_n(parent,this->nLowerChest,-1);
 	parent[startId] = startId; d[startId] = 0;
 	for(int i=0;i<this->nLowerChest;++i){
 		double min = 1e6, nearBaseZ = 10;
 		int id;
+		//printf("%d\n",i);
 		for(int j=0;j<this->nLowerChest;++j)
 			if(visit[j] == false && d[j]!=1e6){
-				int OriId = this->Map2Ori[j];//Use the vertices whose z value is closer to the z of BasePoint 
+				if(d[j]<min)
+					min = d[j], id=j;
+
+				/*int OriId = this->Map2Ori[j];//Use the vertices whose z value is closer to the z of BasePoint 
 				double diff = v[OriId].z - v[LowerChestBaseID].z;
 				if(diff<0)diff=-diff;
 				if(diff<nearBaseZ)
-					min = d[j], id = j, nearBaseZ = diff;
+					min = d[j], id = j, nearBaseZ = diff;*/
 			}
 		//cout<<"id="<<id<<endl;
+		//int oriId = Map2Ori[id];
+		//fprintf(Core, "v %f %f %f\n",v[oriId].x, v[oriId].y, v[oriId].z);
+		//nCore++;
+		//if(nCore>1)fprintf(Core, "l %d %d\n",nCore, nCore-1 );
+		//fflush(Core);
+
 		if(min==1e6)break;//all the vertices connected to start point have been used
 
 		visit[id] = true;

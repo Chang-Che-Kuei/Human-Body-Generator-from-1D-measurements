@@ -9,6 +9,7 @@ double BackLength(Vertex v[]);
 double UpperBodyLength(Vertex v[]);
 double ShoulderHeight(Vertex v[]);
 double ChestHeight(Vertex v[]);
+double ChestDepth(Vertex v[]);
 double HipHeight(Vertex v[]);
 double KneeHeight(Vertex v[]);
 double HipDepth(Vertex v[]);
